@@ -5,14 +5,58 @@ const socketIO = require('socket.io');
 const publicPath = path.join(__dirname,'../public');
 const {generateMessage,generateLocationMessage} = require('./utils/message');
 const port = process.env.PORT || 3000 ;
+const bodyParser = require('body-parser');
+const Pusher = require('pusher');
+
+
 const {isRealString} = require('./utils/validation.js');
 const {Users} = require('./utils/users.js');
 var app = express();
 app.use(express.static(publicPath));
+// Body parser middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+// Session middleware
+
+
+
 
 var server = http.createServer(app);
 var io =  socketIO(server);
 var users = new Users();
+
+
+
+
+
+
+var pusher = new Pusher({
+  appId: '690649',
+  key: '35b318457f2a86724d57',
+  secret: 'c78033715aa6d831b0c1',
+  cluster: 'ap2',
+  encrypted: true
+});
+
+app.get('/startVideoChat', (req, res) => {
+  return res.sendFile(__dirname + '/videoChat.html');
+});
+
+
+app.post("/pusher/auth", (req, res) => {
+  const socketId = req.body.socket_id;
+  const channel = req.body.channel_name;
+  var presenceData = {
+    user_id:
+      Math.random()
+        .toString(36)
+        .slice(2) + Date.now()
+  };
+  const auth = pusher.authenticate(socketId, channel, presenceData);
+  res.send(auth);
+});
+
+
 
 io.on('connection',(socket) => {
   console.log('new user connected');
